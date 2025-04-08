@@ -10,6 +10,7 @@
 					 SECCOMP_FILTER_FLAG_SPEC_ALLOW | \
 					 SECCOMP_FILTER_FLAG_NEW_LISTENER | \
 					 SECCOMP_FILTER_FLAG_TSYNC_ESRCH | \
+					 SECCOMP_FILTER_FLAG_EXTENDED | \
 					 SECCOMP_FILTER_FLAG_WAIT_KILLABLE_RECV)
 
 /* sizeof() the first published struct seccomp_notif_addfd */
