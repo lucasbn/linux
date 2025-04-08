@@ -142,6 +142,8 @@ struct ptrace_sud_config {
 	__u64 len;
 };
 
+#define PTRACE_SECCOMP_GET_FILTER_EXTENDED	0x4212
+
 /*
  * These values are stored in task->ptrace_message
  * by ptrace_stop to describe the current syscall-stop.
