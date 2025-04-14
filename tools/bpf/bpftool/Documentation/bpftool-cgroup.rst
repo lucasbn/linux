@@ -44,7 +44,7 @@ CGROUP COMMANDS
 |     **cgroup_udp4_recvmsg** | **cgroup_udp6_recvmsg** |
 |     **cgroup_unix_recvmsg** | **cgroup_sysctl** |
 |     **cgroup_getsockopt** | **cgroup_setsockopt** |
-|     **cgroup_inet_sock_release** }
+|     **cgroup_inet_sock_release** | **cgroup_netlink_getlink** }
 | *ATTACH_FLAGS* := { **multi** | **override** }
 
 DESCRIPTION
