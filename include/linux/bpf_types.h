@@ -17,6 +17,8 @@ BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_SOCK, cg_sock,
 	      struct bpf_sock, struct sock)
 BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_SOCK_ADDR, cg_sock_addr,
 	      struct bpf_sock_addr, struct bpf_sock_addr_kern)
+BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_NETLINK, cg_netlink,
+		  struct bpf_sock, struct sock)
 #endif
 BPF_PROG_TYPE(BPF_PROG_TYPE_LWT_IN, lwt_in,
 	      struct __sk_buff, struct sk_buff)

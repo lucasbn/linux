@@ -2047,6 +2047,18 @@ int __cgroup_bpf_run_filter_getsockopt_kern(struct sock *sk, int level,
 }
 #endif
 
+int __cgroup_bpf_run_filter_netlink(struct sock *sk,
+	enum cgroup_bpf_attach_type atype)
+{
+	struct cgroup *cgrp = sock_cgroup_ptr(&sk->sk_cgrp_data);
+
+	// TODO: Check if netlink socket, family, protocol etc
+	
+	return bpf_prog_run_array_cg(&cgrp->bpf, atype, sk, bpf_prog_run, 0,
+		NULL);
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_netlink);
+
 static ssize_t sysctl_cpy_dir(const struct ctl_dir *dir, char **bufp,
 			      size_t *lenp)
 {

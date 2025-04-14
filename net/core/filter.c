@@ -8035,6 +8035,29 @@ sock_filter_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
 }
 
 static const struct bpf_func_proto *
+netlink_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+{
+	const struct bpf_func_proto *func_proto;
+
+	func_proto = cgroup_common_func_proto(func_id, prog);
+	if (func_proto)
+		return func_proto;
+
+	func_proto = cgroup_current_func_proto(func_id, prog);
+	if (func_proto)
+		return func_proto;
+
+	switch (func_id) {
+	case BPF_FUNC_get_current_uid_gid:
+		// No clue what this is
+		return &bpf_get_current_uid_gid_proto;
+	default:
+		return bpf_base_func_proto(func_id, prog);
+	}
+}
+
+
+static const struct bpf_func_proto *
 sock_addr_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
 {
 	const struct bpf_func_proto *func_proto;
@@ -9165,6 +9188,15 @@ static int xdp_btf_struct_access(struct bpf_verifier_log *log,
 	mutex_unlock(&nf_conn_btf_access_lock);
 
 	return ret;
+}
+
+static bool netlink_is_valid_access(int off, int size,
+	enum bpf_access_type type,
+	const struct bpf_prog *prog,
+	struct bpf_insn_access_aux *info)
+{
+	// TODO: Implement!
+	return true;
 }
 
 static bool sock_addr_is_valid_access(int off, int size,
@@ -11162,6 +11194,15 @@ const struct bpf_verifier_ops cg_sock_verifier_ops = {
 };
 
 const struct bpf_prog_ops cg_sock_prog_ops = {
+};
+
+const struct bpf_verifier_ops cg_netlink_verifier_ops = {
+	.get_func_proto		= netlink_func_proto,
+	.is_valid_access	= netlink_is_valid_access,
+	.convert_ctx_access	= bpf_convert_ctx_access,
+};
+
+const struct bpf_prog_ops cg_netlink_prog_ops = {
 };
 
 const struct bpf_verifier_ops cg_sock_addr_verifier_ops = {

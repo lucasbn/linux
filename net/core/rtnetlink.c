@@ -6960,6 +6960,11 @@ static int rtnetlink_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	rtnl_lock();
 	link = rtnl_get_link(family, type);
+
+	if (link && link->doit && nlh->nlmsg_type == RTM_GETLINK) {
+		BPF_CGROUP_RUN_PROG_NETLINK_GETLINK(skb->sk);
+	}
+
 	if (link && link->doit)
 		err = link->doit(skb, nlh, extack);
 	rtnl_unlock();
