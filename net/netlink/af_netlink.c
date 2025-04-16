@@ -1798,6 +1798,24 @@ static void netlink_cmsg_listen_all_nsid(struct sock *sk, struct msghdr *msg,
 		 &NETLINK_CB(skb).nsid);
 }
 
+__bpf_hook_start();
+
+__weak noinline u32 update_netlink_socket_pid(u32 nl_pid)
+{
+	return nl_pid;
+}
+
+__bpf_hook_end();
+
+__bpf_hook_start();
+
+__weak noinline u32 update_netlink_nlmsg_pid(u32 nlmsg_pid)
+{
+	return nlmsg_pid;
+}
+
+__bpf_hook_end();
+
 static int netlink_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 {
 	struct sock *sk = sock->sk;
@@ -1828,7 +1846,7 @@ static int netlink_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 			goto out;
 		if (addr->nl_family != AF_NETLINK)
 			goto out;
-		dst_portid = addr->nl_pid;
+		dst_portid = update_netlink_socket_pid(addr->nl_pid);
 		dst_group = ffs(addr->nl_groups);
 		err =  -EPERM;
 		if ((dst_group || dst_portid) &&
@@ -1837,7 +1855,7 @@ static int netlink_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 		netlink_skb_flags |= NETLINK_SKB_DST;
 	} else {
 		/* Paired with WRITE_ONCE() in netlink_connect() */
-		dst_portid = READ_ONCE(nlk->dst_portid);
+		dst_portid = update_netlink_socket_pid(READ_ONCE(nlk->dst_portid));
 		dst_group = READ_ONCE(nlk->dst_group);
 	}
 
@@ -1875,6 +1893,9 @@ static int netlink_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 		kfree_skb(skb);
 		goto out;
 	}
+	
+	// Ahhh!!
+	((struct nlmsghdr *)skb->data)->nlmsg_pid = update_netlink_nlmsg_pid(((struct nlmsghdr *)skb->data)->nlmsg_pid);
 
 	if (dst_group) {
 		refcount_inc(&skb->users);
@@ -2896,6 +2917,24 @@ static int __init bpf_iter_register(void)
 }
 #endif
 
+BTF_SET8_START(bpf_nl_pid_fmodret_ids)
+BTF_ID_FLAGS(func, update_netlink_socket_pid)
+BTF_SET8_END(bpf_nl_pid_fmodret_ids)
+
+static const struct btf_kfunc_id_set bpf_nl_pid_fmodret_set = {
+	.owner = THIS_MODULE,
+	.set   = &bpf_nl_pid_fmodret_ids,
+};
+
+BTF_SET8_START(bpf_nlmsg_pid_fmodret_ids)
+BTF_ID_FLAGS(func, update_netlink_nlmsg_pid)
+BTF_SET8_END(bpf_nlmsg_pid_fmodret_ids)
+
+static const struct btf_kfunc_id_set bpf_nlmsg_pid_fmodret_set = {
+	.owner = THIS_MODULE,
+	.set   = &bpf_nlmsg_pid_fmodret_ids,
+};
+
 static int __init netlink_proto_init(void)
 {
 	int i;
@@ -2906,6 +2945,14 @@ static int __init netlink_proto_init(void)
 
 #if defined(CONFIG_BPF_SYSCALL) && defined(CONFIG_PROC_FS)
 	err = bpf_iter_register();
+	if (err)
+		goto out;
+
+	err = register_btf_fmodret_id_set(&bpf_nl_pid_fmodret_set);
+	if (err)
+		goto out;
+
+	err = register_btf_fmodret_id_set(&bpf_nlmsg_pid_fmodret_set);
 	if (err)
 		goto out;
 #endif
