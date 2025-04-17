@@ -1516,6 +1516,17 @@ struct bpf_sock_addr_kern {
 	u32 uaddrlen;
 };
 
+struct bpf_cg_syscall_socket_kern {
+	int *family;
+	int *type;
+	int *protocol;
+	/* Temporary "register" to make indirect stores to nested structures
+	 * defined above. We need three registers to make such a store, but
+	 * only two (src and dst) are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
 struct bpf_sock_ops_kern {
 	struct	sock *sk;
 	union {

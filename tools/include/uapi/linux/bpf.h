@@ -1058,6 +1058,7 @@ enum bpf_prog_type {
 	BPF_PROG_TYPE_SK_LOOKUP,
 	BPF_PROG_TYPE_SYSCALL, /* a program that can execute syscalls */
 	BPF_PROG_TYPE_NETFILTER,
+	BPF_PROG_TYPE_CGROUP_SYSCALL,
 	__MAX_BPF_PROG_TYPE
 };
 
@@ -1120,6 +1121,7 @@ enum bpf_attach_type {
 	BPF_NETKIT_PEER,
 	BPF_TRACE_KPROBE_SESSION,
 	BPF_TRACE_UPROBE_SESSION,
+	BPF_CGROUP_SYSCALL_SOCKET,
 	__MAX_BPF_ATTACH_TYPE
 };
 
@@ -6783,6 +6785,12 @@ struct bpf_sock_addr {
 				 * Stored in network byte order.
 				 */
 	__bpf_md_ptr(struct bpf_sock *, sk);
+};
+
+struct bpf_cg_syscall_socket {
+	__u32 family;
+	__u32 type;
+	__u32 protocol;
 };
 
 /* User bpf_sock_ops struct to access socket values and specify request ops

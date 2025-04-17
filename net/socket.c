@@ -1677,6 +1677,8 @@ __bpf_hook_end();
 
 int __sys_socket(int family, int type, int protocol)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(&family, &type, &protocol);
+
 	struct socket *sock;
 	int flags;
 

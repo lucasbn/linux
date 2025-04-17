@@ -2047,6 +2047,24 @@ int __cgroup_bpf_run_filter_getsockopt_kern(struct sock *sk, int level,
 }
 #endif
 
+int __cgroup_bpf_run_filter_syscall_socket(int *family, int *type, int *protocol) {
+	struct bpf_cg_syscall_socket_kern ctx = {
+		.family = family,
+		.type = type,
+		.protocol = protocol,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_SOCKET, &ctx, 
+		bpf_prog_run, 0, NULL);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_socket);
+
 static ssize_t sysctl_cpy_dir(const struct ctl_dir *dir, char **bufp,
 			      size_t *lenp)
 {
