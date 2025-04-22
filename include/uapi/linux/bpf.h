@@ -6791,6 +6791,7 @@ struct bpf_cg_syscall_socket {
 	__u32 family;
 	__u32 type;
 	__u32 protocol;
+	__s32 ret;
 };
 
 /* User bpf_sock_ops struct to access socket values and specify request ops

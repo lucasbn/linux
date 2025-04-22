@@ -10472,6 +10472,9 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 	case offsetof(struct bpf_cg_syscall_socket, protocol):
 		CG_SYSCALL_LOAD_OR_STORE(protocol);
 		break;
+	case offsetof(struct bpf_cg_syscall_socket, ret):
+		CG_SYSCALL_LOAD_OR_STORE(ret);
+		break;
 	}
 
 	return insn - insn_buf;

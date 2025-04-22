@@ -156,7 +156,7 @@ int __cgroup_bpf_run_filter_getsockopt(struct sock *sk, int level,
 int __cgroup_bpf_run_filter_getsockopt_kern(struct sock *sk, int level,
 					    int optname, void *optval,
 					    int *optlen, int retval);
-int __cgroup_bpf_run_filter_syscall_socket(int *family, int *type, int *protocol);
+int __cgroup_bpf_run_filter_syscall_socket(int *family, int *type, int *protocol, int *ret_val, u32 *flags);
 
 static inline enum bpf_cgroup_storage_type cgroup_storage_type(
 	struct bpf_map *map)
@@ -421,10 +421,16 @@ static inline bool cgroup_bpf_sock_enabled(struct sock *sk,
 
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(family, type, protocol)		\
 ({									       \
+	u32 __flags = 0; 						       \
 	int __ret = 0;							       \
-	if (cgroup_bpf_enabled(CGROUP_SYSCALL_SOCKET))		       \
-		__ret = __cgroup_bpf_run_filter_syscall_socket(family, type, protocol); \
-	__ret;								       \
+	int ret_val = 0;						       \
+	if (cgroup_bpf_enabled(CGROUP_SYSCALL_SOCKET)) {	       \
+		__ret = __cgroup_bpf_run_filter_syscall_socket(family, type, protocol, &ret_val, &__flags); \
+		if (__flags & BPF_RET_OVERRIDE_SYSCALL) { 		       \
+			return ret_val; 		       \
+		} 		       \
+	} 							       \
+	__ret;							       \
 })
 
 int cgroup_bpf_prog_attach(const union bpf_attr *attr,

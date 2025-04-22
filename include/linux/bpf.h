@@ -2187,6 +2187,8 @@ static inline void bpf_reset_run_ctx(struct bpf_run_ctx *old_ctx)
 #define BPF_RET_BIND_NO_CAP_NET_BIND_SERVICE			(1 << 0)
 /* BPF program asks to set CN on the packet. */
 #define BPF_RET_SET_CN						(1 << 0)
+/* BPF program asks to override syscall return value and prevent its execution*/
+#define BPF_RET_OVERRIDE_SYSCALL			(1 << 0)
 
 typedef u32 (*bpf_prog_run_fn)(const struct bpf_prog *prog, const void *ctx);
 

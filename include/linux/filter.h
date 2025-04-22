@@ -1517,9 +1517,10 @@ struct bpf_sock_addr_kern {
 };
 
 struct bpf_cg_syscall_socket_kern {
-	int *family;
-	int *type;
-	int *protocol;
+	u32 *family;
+	u32 *type;
+	u32 *protocol;
+	s32 *ret;
 	/* Temporary "register" to make indirect stores to nested structures
 	 * defined above. We need three registers to make such a store, but
 	 * only two (src and dst) are available at convert_ctx_access time
