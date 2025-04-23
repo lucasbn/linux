@@ -2147,7 +2147,7 @@ SYSCALL_DEFINE3(getpeername, int, fd, struct sockaddr __user *, usockaddr,
 int __sys_sendto(int fd, void __user *buff, size_t len, unsigned int flags,
 		 struct sockaddr __user *addr,  int addr_len)
 {
-	BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(&fd, buff, &len, &flags, addr, &addr_len);
+	BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(&fd, &buff, &len, &flags, &addr, &addr_len);
 
 	struct socket *sock;
 	struct sockaddr_storage address;
@@ -2848,6 +2848,8 @@ long __sys_recvmsg_sock(struct socket *sock, struct msghdr *msg,
 long __sys_recvmsg(int fd, struct user_msghdr __user *msg, unsigned int flags,
 		   bool forbid_cmsg_compat)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG(&fd, &msg, &flags);
+
 	struct msghdr msg_sys;
 	struct socket *sock;
 

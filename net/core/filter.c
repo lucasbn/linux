@@ -8143,6 +8143,9 @@ cg_syscall_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
 	switch (func_id) {
 	case BPF_FUNC_get_current_uid_gid:
 		return &bpf_get_current_uid_gid_proto;
+	case BPF_FUNC_probe_write_user:
+		return security_locked_down(LOCKDOWN_BPF_WRITE_USER) < 0 ?
+			NULL : &bpf_probe_write_user_proto;
 	default:
 		return bpf_base_func_proto(func_id, prog);
 	}
@@ -10427,6 +10430,18 @@ static u32 sock_addr_convert_ctx_access(enum bpf_access_type type,
 	return insn - insn_buf;
 }
 
+#define CG_SYSCALL_LOAD(S, F, KS, KF) \
+	do { \
+		if (access_type == BPF_READ) { \
+			*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(KS, KF),  \
+						si->dst_reg, si->src_reg,  \
+						offsetof(KS, KF)); \
+			*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(S, F), \
+						si->dst_reg, si->dst_reg, \
+						0); \
+		} \
+	} while(0) 
+
 #define CG_SYSCALL_LOAD_OR_STORE(S, F, KS, KF) \
 	do { \
 		if (access_type == BPF_READ) { \
@@ -10455,9 +10470,15 @@ static u32 sock_addr_convert_ctx_access(enum bpf_access_type type,
 	} while(0) 
 
 
-#define CG_SYSCALL_FIELD_ACCESS(name, F, KF) \
+#define CG_SYSCALL_FIELD_RW_ACCESS(name, F, KF) \
 	case offsetof(struct bpf_cg_syscall_##name, F): \
 		CG_SYSCALL_LOAD_OR_STORE(struct bpf_cg_syscall_##name, F, \
+			struct bpf_cg_syscall_##name##_kern, KF); \
+		break;
+
+#define CG_SYSCALL_FIELD_RO_ACCESS(name, F, KF) \
+	case offsetof(struct bpf_cg_syscall_##name, F): \
+		CG_SYSCALL_LOAD(struct bpf_cg_syscall_##name, F, \
 			struct bpf_cg_syscall_##name##_kern, KF); \
 		break;
 
@@ -10470,21 +10491,31 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 	struct bpf_insn *insn = insn_buf;
 
 	switch (prog->expected_attach_type) {
-		case BPF_CGROUP_SYSCALL_SENDTO:
-			switch (si->off) {
-				CG_SYSCALL_FIELD_ACCESS(sendto, fd, fd);
-				CG_SYSCALL_FIELD_ACCESS(sendto, len, len);
-				CG_SYSCALL_FIELD_ACCESS(sendto, flags, flags);
-				CG_SYSCALL_FIELD_ACCESS(sendto, addr_len, addr_len);
-				CG_SYSCALL_FIELD_ACCESS(sendto, ret, ret);
-			}
-			break;
 		case BPF_CGROUP_SYSCALL_SOCKET:
 			switch (si->off) {
-				CG_SYSCALL_FIELD_ACCESS(socket, family, family);
-				CG_SYSCALL_FIELD_ACCESS(socket, type, type);
-				CG_SYSCALL_FIELD_ACCESS(socket, protocol, protocol);
-				CG_SYSCALL_FIELD_ACCESS(socket, ret, ret);
+				CG_SYSCALL_FIELD_RW_ACCESS(socket, family, family);
+				CG_SYSCALL_FIELD_RW_ACCESS(socket, type, type);
+				CG_SYSCALL_FIELD_RW_ACCESS(socket, protocol, protocol);
+				CG_SYSCALL_FIELD_RW_ACCESS(socket, ret, ret);
+			}
+			break;
+		case BPF_CGROUP_SYSCALL_SENDTO:
+			switch (si->off) {
+				CG_SYSCALL_FIELD_RW_ACCESS(sendto, fd, fd);
+				CG_SYSCALL_FIELD_RO_ACCESS(sendto, buff, buff);
+				CG_SYSCALL_FIELD_RW_ACCESS(sendto, len, len);
+				CG_SYSCALL_FIELD_RW_ACCESS(sendto, flags, flags);
+				CG_SYSCALL_FIELD_RO_ACCESS(sendto, addr, uaddr);
+				CG_SYSCALL_FIELD_RW_ACCESS(sendto, addr_len, addr_len);
+				CG_SYSCALL_FIELD_RW_ACCESS(sendto, ret, ret);
+			}
+			break;
+		case BPF_CGROUP_SYSCALL_RECVMSG:
+			switch (si->off) {
+				CG_SYSCALL_FIELD_RW_ACCESS(recvmsg, fd, fd);
+				CG_SYSCALL_FIELD_RO_ACCESS(recvmsg, msg, msg);
+				CG_SYSCALL_FIELD_RW_ACCESS(recvmsg, flags, flags);
+				CG_SYSCALL_FIELD_RW_ACCESS(recvmsg, ret, ret);
 			}
 			break;
 		default:

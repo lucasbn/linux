@@ -69,6 +69,7 @@ to_cgroup_bpf_attach_type(enum bpf_attach_type attach_type)
 	CGROUP_ATYPE(CGROUP_INET_SOCK_RELEASE);
 	CGROUP_ATYPE(CGROUP_SYSCALL_SOCKET);
 	CGROUP_ATYPE(CGROUP_SYSCALL_SENDTO);
+	CGROUP_ATYPE(CGROUP_SYSCALL_RECVMSG);
 	default:
 		return CGROUP_BPF_ATTACH_TYPE_INVALID;
 	}
@@ -159,9 +160,11 @@ int __cgroup_bpf_run_filter_getsockopt_kern(struct sock *sk, int level,
 					    int *optlen, int retval);
 int __cgroup_bpf_run_filter_syscall_socket(int *family, int *type, int *protocol, 
 						int *ret_val, u32 *flags);
-int __cgroup_bpf_run_filter_syscall_sendto(int *fd, void *buff, size_t *len, 
-						unsigned int *flags, struct sockaddr *addr, 
+int __cgroup_bpf_run_filter_syscall_sendto(int *fd, void **buff, size_t *len, 
+						unsigned int *flags, struct sockaddr **addr, 
 						int *addr_len, int *ret_val, u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_recvmsg(int *fd, struct user_msghdr **msg, 
+						unsigned int *flags, int *ret_val, u32 *ret_flags);
 
 
 static inline enum bpf_cgroup_storage_type cgroup_storage_type(
@@ -425,6 +428,20 @@ static inline bool cgroup_bpf_sock_enabled(struct sock *sk,
 	__ret;								       \
 })
 
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(family, type, protocol)		\
+({									       \
+	u32 __flags = 0; 						       \
+	int __ret = 0;							       \
+	int ret_val = 0;						       \
+	if (cgroup_bpf_enabled(CGROUP_SYSCALL_SOCKET)) {	       \
+		__ret = __cgroup_bpf_run_filter_syscall_socket(family, type, protocol, &ret_val, &__flags); \
+		if (__flags & BPF_RET_OVERRIDE_SYSCALL) { 		       \
+			return ret_val; 		       \
+		} 		       \
+	} 							       \
+	__ret;							       \
+})
+
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(fd, buff, len, flags, addr, addr_len)		\
 ({									       \
 	u32 __flags = 0; 						       \
@@ -440,13 +457,14 @@ static inline bool cgroup_bpf_sock_enabled(struct sock *sk,
 	__ret;							       \
 })
 
-#define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(family, type, protocol)		\
+#define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG(fd, msg, flags)		\
 ({									       \
 	u32 __flags = 0; 						       \
 	int __ret = 0;							       \
 	int ret_val = 0;						       \
-	if (cgroup_bpf_enabled(CGROUP_SYSCALL_SOCKET)) {	       \
-		__ret = __cgroup_bpf_run_filter_syscall_socket(family, type, protocol, &ret_val, &__flags); \
+	if (cgroup_bpf_enabled(CGROUP_SYSCALL_RECVMSG)) {	       \
+		__ret = __cgroup_bpf_run_filter_syscall_recvmsg(fd, msg, flags, \
+						&ret_val, &__flags); \
 		if (__flags & BPF_RET_OVERRIDE_SYSCALL) { 		       \
 			return ret_val; 		       \
 		} 		       \
@@ -556,6 +574,7 @@ static inline int bpf_percpu_cgroup_storage_update(struct bpf_map *map,
 				       kernel_optval) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(family, type, protocol) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(fd, buff, len, flags, addr, addr_len) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG(fd, msg, flags) ({ 0; })
 #define for_each_cgroup_storage_type(stype) for (; false; )
 
 #endif /* CONFIG_CGROUP_BPF */
