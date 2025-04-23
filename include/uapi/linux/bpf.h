@@ -1122,6 +1122,7 @@ enum bpf_attach_type {
 	BPF_TRACE_KPROBE_SESSION,
 	BPF_TRACE_UPROBE_SESSION,
 	BPF_CGROUP_SYSCALL_SOCKET,
+	BPF_CGROUP_SYSCALL_SENDTO,
 	__MAX_BPF_ATTACH_TYPE
 };
 
@@ -6791,6 +6792,16 @@ struct bpf_cg_syscall_socket {
 	__u32 family;
 	__u32 type;
 	__u32 protocol;
+	__s32 ret;
+};
+
+struct bpf_cg_syscall_sendto {
+	__u32 fd;
+	__bpf_md_ptr(void *, buff);
+	__u32 len;
+	__u32 flags;
+	__bpf_md_ptr(struct sockaddr *, addr);
+	__u32 addr_len;
 	__s32 ret;
 };
 

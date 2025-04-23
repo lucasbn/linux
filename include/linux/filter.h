@@ -1521,9 +1521,24 @@ struct bpf_cg_syscall_socket_kern {
 	u32 *type;
 	u32 *protocol;
 	s32 *ret;
-	/* Temporary "register" to make indirect stores to nested structures
-	 * defined above. We need three registers to make such a store, but
-	 * only two (src and dst) are available at convert_ctx_access time
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_sendto_kern {
+	u32 *fd;
+	void *buff;
+	size_t *len;
+	u32 *flags;
+	struct sockaddr *uaddr;
+	u32 *addr_len;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
 	 */
 	 u64 tmp_reg;
 };

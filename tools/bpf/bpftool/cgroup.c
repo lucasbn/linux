@@ -69,7 +69,7 @@ static const int cgroup_attach_types[] = {
 	"                        cgroup_udp6_recvmsg | cgroup_unix_recvmsg |\n" \
 	"                        cgroup_sysctl | cgroup_getsockopt |\n" \
 	"                        cgroup_setsockopt | cgroup_inet_sock_release |\n" \
-	"                        cgroup_syscall_socket }"
+	"                        cgroup_syscall_socket | cgroup_syscall_sendto }"
 
 static unsigned int query_flags;
 static struct btf *btf_vmlinux;

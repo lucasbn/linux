@@ -10427,13 +10427,13 @@ static u32 sock_addr_convert_ctx_access(enum bpf_access_type type,
 	return insn - insn_buf;
 }
 
-#define CG_SYSCALL_LOAD_OR_STORE(F) \
+#define CG_SYSCALL_LOAD_OR_STORE(S, F, KS, KF) \
 	do { \
 		if (access_type == BPF_READ) { \
-			*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(struct bpf_cg_syscall_socket_kern, F),  \
+			*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(KS, KF),  \
 						si->dst_reg, si->src_reg,  \
-						offsetof(struct bpf_cg_syscall_socket_kern, F)); \
-			*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(struct bpf_cg_syscall_socket, F), \
+						offsetof(KS, KF)); \
+			*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(S, F), \
 						si->dst_reg, si->dst_reg, \
 						0); \
 		} else if (access_type == BPF_WRITE) { \
@@ -10443,16 +10443,23 @@ static u32 sock_addr_convert_ctx_access(enum bpf_access_type type,
 			if (si->src_reg == scratch_reg || si->dst_reg == scratch_reg) \
 				scratch_reg--; \
 			*insn++ = BPF_STX_MEM(BPF_DW, si->dst_reg, scratch_reg, \
-						offsetof(struct bpf_cg_syscall_socket_kern, tmp_reg)); \
-			*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(struct bpf_cg_syscall_socket_kern, F),  \
+						offsetof(KS, tmp_reg)); \
+			*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(KS, KF),  \
 						scratch_reg, si->dst_reg, \
-						offsetof(struct bpf_cg_syscall_socket_kern, F)); \
-			*insn++ = BPF_STX_MEM(BPF_FIELD_SIZEOF(struct bpf_cg_syscall_socket, F), \
+						offsetof(KS, KF)); \
+			*insn++ = BPF_STX_MEM(BPF_FIELD_SIZEOF(S, F), \
 						scratch_reg, si->src_reg, 0); \
 			*insn++ = BPF_LDX_MEM(BPF_DW, scratch_reg, si->dst_reg, \
-						offsetof(struct bpf_cg_syscall_socket_kern, tmp_reg)); \
+						offsetof(KS, tmp_reg)); \
 		} \
 	} while(0) 
+
+
+#define CG_SYSCALL_FIELD_ACCESS(name, F, KF) \
+	case offsetof(struct bpf_cg_syscall_##name, F): \
+		CG_SYSCALL_LOAD_OR_STORE(struct bpf_cg_syscall_##name, F, \
+			struct bpf_cg_syscall_##name##_kern, KF); \
+		break;
 
 static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 				       const struct bpf_insn *si,
@@ -10462,19 +10469,26 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 {
 	struct bpf_insn *insn = insn_buf;
 
-	switch (si->off) {
-	case offsetof(struct bpf_cg_syscall_socket, family):
-		CG_SYSCALL_LOAD_OR_STORE(family);
-		break;
-	case offsetof(struct bpf_cg_syscall_socket, type):
-		CG_SYSCALL_LOAD_OR_STORE(type);
-		break;
-	case offsetof(struct bpf_cg_syscall_socket, protocol):
-		CG_SYSCALL_LOAD_OR_STORE(protocol);
-		break;
-	case offsetof(struct bpf_cg_syscall_socket, ret):
-		CG_SYSCALL_LOAD_OR_STORE(ret);
-		break;
+	switch (prog->expected_attach_type) {
+		case BPF_CGROUP_SYSCALL_SENDTO:
+			switch (si->off) {
+				CG_SYSCALL_FIELD_ACCESS(sendto, fd, fd);
+				CG_SYSCALL_FIELD_ACCESS(sendto, len, len);
+				CG_SYSCALL_FIELD_ACCESS(sendto, flags, flags);
+				CG_SYSCALL_FIELD_ACCESS(sendto, addr_len, addr_len);
+				CG_SYSCALL_FIELD_ACCESS(sendto, ret, ret);
+			}
+			break;
+		case BPF_CGROUP_SYSCALL_SOCKET:
+			switch (si->off) {
+				CG_SYSCALL_FIELD_ACCESS(socket, family, family);
+				CG_SYSCALL_FIELD_ACCESS(socket, type, type);
+				CG_SYSCALL_FIELD_ACCESS(socket, protocol, protocol);
+				CG_SYSCALL_FIELD_ACCESS(socket, ret, ret);
+			}
+			break;
+		default:
+			break;
 	}
 
 	return insn - insn_buf;

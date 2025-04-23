@@ -2147,6 +2147,8 @@ SYSCALL_DEFINE3(getpeername, int, fd, struct sockaddr __user *, usockaddr,
 int __sys_sendto(int fd, void __user *buff, size_t len, unsigned int flags,
 		 struct sockaddr __user *addr,  int addr_len)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(&fd, buff, &len, &flags, addr, &addr_len);
+
 	struct socket *sock;
 	struct sockaddr_storage address;
 	int err;
