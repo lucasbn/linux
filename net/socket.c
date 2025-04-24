@@ -1825,22 +1825,23 @@ int __sys_bind_socket(struct socket *sock, struct sockaddr_storage *address,
 
 int __sys_bind(int fd, struct sockaddr __user *umyaddr, int addrlen)
 {
-	BPF_CGROUP_RUN_PROG_SYSCALL_BIND(&fd, &umyaddr, &addrlen);
-
+	
 	struct socket *sock;
 	struct sockaddr_storage address;
 	CLASS(fd, f)(fd);
 	int err;
+	
+	err = move_addr_to_kernel(umyaddr, addrlen, &address);
+	if (unlikely(err))
+		return err;
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_BIND(&fd, &address, &addrlen);
 
 	if (fd_empty(f))
 		return -EBADF;
 	sock = sock_from_file(fd_file(f));
 	if (unlikely(!sock))
 		return -ENOTSOCK;
-
-	err = move_addr_to_kernel(umyaddr, addrlen, &address);
-	if (unlikely(err))
-		return err;
 
 	return __sys_bind_socket(sock, &address, addrlen);
 }

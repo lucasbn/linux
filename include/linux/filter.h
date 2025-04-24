@@ -1557,7 +1557,7 @@ struct bpf_cg_syscall_recvmsg_kern {
 
 struct bpf_cg_syscall_bind_kern {
 	u32 *fd;
-	struct sockaddr **addr;
+	struct sockaddr_storage *addr;
 	u32 *addrlen;
 	s32 *ret;
 	/* Temporary "register" to make indirect stores to fields defined above.

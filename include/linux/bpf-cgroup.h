@@ -170,7 +170,7 @@ int __cgroup_bpf_run_filter_syscall_sendto(int *fd, void **buff,
 int __cgroup_bpf_run_filter_syscall_recvmsg(int *fd, struct user_msghdr **msg, 
 						unsigned int *flags, int *ret_val, 
 						u32 *ret_flags);
-int __cgroup_bpf_run_filter_syscall_bind(int *fd, struct sockaddr **addr, 
+int __cgroup_bpf_run_filter_syscall_bind(int *fd, struct sockaddr_storage *addr, 
 						int *addrlen, int *ret_val, 
 						u32 *ret_flags);
 

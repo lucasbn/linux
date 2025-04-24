@@ -6816,7 +6816,8 @@ struct bpf_cg_syscall_recvmsg {
 
 struct bpf_cg_syscall_bind {
 	__u32 fd;
-	__bpf_md_ptr(struct sockaddr *, addr);
+	__u16 ss_family;
+	char ss_data[126];
 	__u32 addrlen;
 	__s32 ret;
 };

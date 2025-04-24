@@ -2110,7 +2110,7 @@ int __cgroup_bpf_run_filter_syscall_recvmsg(int *fd, struct user_msghdr **msg,
 }
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_recvmsg);
 
-int __cgroup_bpf_run_filter_syscall_bind(int *fd, struct sockaddr **addr,
+int __cgroup_bpf_run_filter_syscall_bind(int *fd, struct sockaddr_storage *addr,
 					int *addrlen, int *ret_val, u32 *ret_flags) {
 	struct bpf_cg_syscall_bind_kern ctx = {
 		.fd = fd,

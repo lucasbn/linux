@@ -10442,7 +10442,7 @@ static u32 sock_addr_convert_ctx_access(enum bpf_access_type type,
 		} \
 	} while(0) 
 
-#define CG_SYSCALL_LOAD_OR_STORE(S, F, KS, KF) \
+#define CG_SYSCALL_LOAD_OR_STORE(S, F, KS, KF, OFF) \
 	do { \
 		if (access_type == BPF_READ) { \
 			*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(KS, KF),  \
@@ -10450,7 +10450,7 @@ static u32 sock_addr_convert_ctx_access(enum bpf_access_type type,
 						offsetof(KS, KF)); \
 			*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(S, F), \
 						si->dst_reg, si->dst_reg, \
-						0); \
+						OFF); \
 		} else if (access_type == BPF_WRITE) { \
 			int scratch_reg = BPF_REG_9; \
 			if (si->src_reg == scratch_reg || si->dst_reg == scratch_reg) \
@@ -10463,7 +10463,7 @@ static u32 sock_addr_convert_ctx_access(enum bpf_access_type type,
 						scratch_reg, si->dst_reg, \
 						offsetof(KS, KF)); \
 			*insn++ = BPF_STX_MEM(BPF_FIELD_SIZEOF(S, F), \
-						scratch_reg, si->src_reg, 0); \
+						scratch_reg, si->src_reg, OFF); \
 			*insn++ = BPF_LDX_MEM(BPF_DW, scratch_reg, si->dst_reg, \
 						offsetof(KS, tmp_reg)); \
 		} \
@@ -10473,7 +10473,7 @@ static u32 sock_addr_convert_ctx_access(enum bpf_access_type type,
 #define CG_SYSCALL_FIELD_RW_ACCESS(name, F, KF) \
 	case offsetof(struct bpf_cg_syscall_##name, F): \
 		CG_SYSCALL_LOAD_OR_STORE(struct bpf_cg_syscall_##name, F, \
-			struct bpf_cg_syscall_##name##_kern, KF); \
+			struct bpf_cg_syscall_##name##_kern, KF, 0); \
 		break;
 
 #define CG_SYSCALL_FIELD_RO_ACCESS(name, F, KF) \
@@ -10521,9 +10521,18 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 		case BPF_CGROUP_SYSCALL_BIND:
 			switch (si->off) {
 				CG_SYSCALL_FIELD_RW_ACCESS(bind, fd, fd);
-				CG_SYSCALL_FIELD_RO_ACCESS(bind, addr, addr);
+				CG_SYSCALL_FIELD_RW_ACCESS(bind, ss_family, addr);
 				CG_SYSCALL_FIELD_RW_ACCESS(bind, addrlen, addrlen);
 				CG_SYSCALL_FIELD_RW_ACCESS(bind, ret, ret);
+				case bpf_ctx_range_till(struct bpf_cg_syscall_bind, ss_data[0],
+											ss_data[125]):
+					int off = si->off;
+					off -= offsetof(struct bpf_cg_syscall_bind, ss_family);
+
+					CG_SYSCALL_LOAD_OR_STORE(struct bpf_cg_syscall_bind, 
+						ss_data[0], struct bpf_cg_syscall_bind_kern, addr, off);
+
+					break;
 			}
 			break;
 		default:
