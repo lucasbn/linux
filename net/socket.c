@@ -1825,6 +1825,8 @@ int __sys_bind_socket(struct socket *sock, struct sockaddr_storage *address,
 
 int __sys_bind(int fd, struct sockaddr __user *umyaddr, int addrlen)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_BIND(&fd, &umyaddr, &addrlen);
+
 	struct socket *sock;
 	struct sockaddr_storage address;
 	CLASS(fd, f)(fd);

@@ -1124,6 +1124,7 @@ enum bpf_attach_type {
 	BPF_CGROUP_SYSCALL_SOCKET,
 	BPF_CGROUP_SYSCALL_SENDTO,
 	BPF_CGROUP_SYSCALL_RECVMSG,
+	BPF_CGROUP_SYSCALL_BIND,
 	__MAX_BPF_ATTACH_TYPE
 };
 
@@ -6810,6 +6811,13 @@ struct bpf_cg_syscall_recvmsg {
 	__u32 fd;
 	__bpf_md_ptr(struct user_msghdr *, msg);
 	__u32 flags;
+	__s32 ret;
+};
+
+struct bpf_cg_syscall_bind {
+	__u32 fd;
+	__bpf_md_ptr(struct sockaddr *, addr);
+	__u32 addrlen;
 	__s32 ret;
 };
 

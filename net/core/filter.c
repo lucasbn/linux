@@ -10518,6 +10518,14 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 				CG_SYSCALL_FIELD_RW_ACCESS(recvmsg, ret, ret);
 			}
 			break;
+		case BPF_CGROUP_SYSCALL_BIND:
+			switch (si->off) {
+				CG_SYSCALL_FIELD_RW_ACCESS(bind, fd, fd);
+				CG_SYSCALL_FIELD_RO_ACCESS(bind, addr, addr);
+				CG_SYSCALL_FIELD_RW_ACCESS(bind, addrlen, addrlen);
+				CG_SYSCALL_FIELD_RW_ACCESS(bind, ret, ret);
+			}
+			break;
 		default:
 			break;
 	}

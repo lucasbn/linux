@@ -2644,6 +2644,7 @@ bpf_prog_load_check_attach(enum bpf_prog_type prog_type,
 		case BPF_CGROUP_SYSCALL_SOCKET:
 		case BPF_CGROUP_SYSCALL_SENDTO:
 		case BPF_CGROUP_SYSCALL_RECVMSG:
+		case BPF_CGROUP_SYSCALL_BIND:
 			return 0;
 		default:
 			return -EINVAL;
@@ -4085,6 +4086,7 @@ attach_type_to_prog_type(enum bpf_attach_type attach_type)
 	case BPF_CGROUP_SYSCALL_SOCKET:
 	case BPF_CGROUP_SYSCALL_SENDTO:
 	case BPF_CGROUP_SYSCALL_RECVMSG:
+	case BPF_CGROUP_SYSCALL_BIND:
 		return BPF_PROG_TYPE_CGROUP_SYSCALL;
 	case BPF_SK_MSG_VERDICT:
 		return BPF_PROG_TYPE_SK_MSG;
@@ -4396,6 +4398,7 @@ static int bpf_prog_query(const union bpf_attr *attr,
 	case BPF_CGROUP_SYSCALL_SOCKET:
 	case BPF_CGROUP_SYSCALL_SENDTO:
 	case BPF_CGROUP_SYSCALL_RECVMSG:
+	case BPF_CGROUP_SYSCALL_BIND:
 	case BPF_LSM_CGROUP:
 		return cgroup_bpf_prog_query(attr, uattr);
 	case BPF_LIRC_MODE2:
