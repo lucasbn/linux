@@ -1567,6 +1567,20 @@ struct bpf_cg_syscall_bind_kern {
 	 u64 tmp_reg;
 };
 
+struct bpf_cg_syscall_setsockopt_kern {
+	u32 *fd;
+	u32 *level;
+	u32 *optname;
+	char **user_optval;
+	u32 *optlen;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
 struct bpf_sock_ops_kern {
 	struct	sock *sk;
 	union {

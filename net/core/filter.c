@@ -10534,6 +10534,16 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 					break;
 			}
 			break;
+		case BPF_CGROUP_SYSCALL_SETSOCKOPT:
+			switch (si->off) {
+				CG_SYSCALL_FIELD_RW_ACCESS(setsockopt, fd, fd);
+				CG_SYSCALL_FIELD_RW_ACCESS(setsockopt, level, level);
+				CG_SYSCALL_FIELD_RW_ACCESS(setsockopt, optname, optname);
+				CG_SYSCALL_FIELD_RO_ACCESS(setsockopt, user_optval, user_optval);
+				CG_SYSCALL_FIELD_RW_ACCESS(setsockopt, optlen, optlen);
+				CG_SYSCALL_FIELD_RW_ACCESS(setsockopt, ret, ret);
+			}
+			break;
 		default:
 			break;
 	}

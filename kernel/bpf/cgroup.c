@@ -2130,6 +2130,29 @@ int __cgroup_bpf_run_filter_syscall_bind(int *fd, struct sockaddr_storage *addr,
 }
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_bind);
 
+int __cgroup_bpf_run_filter_syscall_setsockopt(int *fd, int *level, int *optname,
+					char **user_optval, int *optlen, 
+					int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_setsockopt_kern ctx = {
+		.fd = fd,
+		.level = level,
+		.optname = optname,
+		.user_optval = user_optval,
+		.optlen = optlen,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_SETSOCKOPT, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_setsockopt);
+
 static ssize_t sysctl_cpy_dir(const struct ctl_dir *dir, char **bufp,
 			      size_t *lenp)
 {

@@ -1825,7 +1825,6 @@ int __sys_bind_socket(struct socket *sock, struct sockaddr_storage *address,
 
 int __sys_bind(int fd, struct sockaddr __user *umyaddr, int addrlen)
 {
-	
 	struct socket *sock;
 	struct sockaddr_storage address;
 	CLASS(fd, f)(fd);
@@ -2314,6 +2313,8 @@ EXPORT_SYMBOL(do_sock_setsockopt);
 int __sys_setsockopt(int fd, int level, int optname, char __user *user_optval,
 		     int optlen)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_SETSOCKOPT(&fd, &level, &optname, &user_optval, &optlen);
+
 	sockptr_t optval = USER_SOCKPTR(user_optval);
 	bool compat = in_compat_syscall();
 	struct socket *sock;

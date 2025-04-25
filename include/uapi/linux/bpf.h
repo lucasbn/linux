@@ -1125,6 +1125,7 @@ enum bpf_attach_type {
 	BPF_CGROUP_SYSCALL_SENDTO,
 	BPF_CGROUP_SYSCALL_RECVMSG,
 	BPF_CGROUP_SYSCALL_BIND,
+	BPF_CGROUP_SYSCALL_SETSOCKOPT,
 	__MAX_BPF_ATTACH_TYPE
 };
 
@@ -6818,6 +6819,15 @@ struct bpf_cg_syscall_bind {
 	__u32 fd;
 	char ss_data[128];
 	__u32 addrlen;
+	__s32 ret;
+};
+
+struct bpf_cg_syscall_setsockopt {
+	__u32 fd;
+	__u32 level;
+	__u32 optname;
+	__bpf_md_ptr(char *, user_optval);
+	__u32 optlen;
 	__s32 ret;
 };
 
