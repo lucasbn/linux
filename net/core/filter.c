@@ -10521,13 +10521,12 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 		case BPF_CGROUP_SYSCALL_BIND:
 			switch (si->off) {
 				CG_SYSCALL_FIELD_RW_ACCESS(bind, fd, fd);
-				CG_SYSCALL_FIELD_RW_ACCESS(bind, ss_family, addr);
 				CG_SYSCALL_FIELD_RW_ACCESS(bind, addrlen, addrlen);
 				CG_SYSCALL_FIELD_RW_ACCESS(bind, ret, ret);
 				case bpf_ctx_range_till(struct bpf_cg_syscall_bind, ss_data[0],
-											ss_data[125]):
+											ss_data[127]):
 					int off = si->off;
-					off -= offsetof(struct bpf_cg_syscall_bind, ss_family);
+					off -= offsetof(struct bpf_cg_syscall_bind, ss_data[0]);
 
 					CG_SYSCALL_LOAD_OR_STORE(struct bpf_cg_syscall_bind, 
 						ss_data[0], struct bpf_cg_syscall_bind_kern, addr, off);
