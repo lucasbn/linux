@@ -2153,6 +2153,27 @@ int __cgroup_bpf_run_filter_syscall_setsockopt(int *fd, int *level, int *optname
 }
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_setsockopt);
 
+int __cgroup_bpf_run_filter_syscall_getsockname(int *fd, 
+					struct sockaddr **usockaddr, int **usockaddr_len,
+					int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_getsockname_kern ctx = {
+		.fd = fd,
+		.usockaddr = usockaddr,
+		.usockaddr_len = usockaddr_len,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_GETSOCKNAME, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_getsockname);
+
 static ssize_t sysctl_cpy_dir(const struct ctl_dir *dir, char **bufp,
 			      size_t *lenp)
 {

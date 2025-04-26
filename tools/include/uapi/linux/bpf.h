@@ -1126,6 +1126,7 @@ enum bpf_attach_type {
 	BPF_CGROUP_SYSCALL_RECVMSG,
 	BPF_CGROUP_SYSCALL_BIND,
 	BPF_CGROUP_SYSCALL_SETSOCKOPT,
+	BPF_CGROUP_SYSCALL_GETSOCKNAME,
 	__MAX_BPF_ATTACH_TYPE
 };
 
@@ -6828,6 +6829,13 @@ struct bpf_cg_syscall_setsockopt {
 	__u32 optname;
 	__bpf_md_ptr(char *, user_optval);
 	__u32 optlen;
+	__s32 ret;
+};
+
+struct bpf_cg_syscall_getsockname {
+	__u32 fd;
+	__bpf_md_ptr(struct sockaddr *, usockaddr);
+	__bpf_md_ptr(int *, usockaddr_len);
 	__s32 ret;
 };
 

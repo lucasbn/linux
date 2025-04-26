@@ -2075,6 +2075,8 @@ SYSCALL_DEFINE3(connect, int, fd, struct sockaddr __user *, uservaddr,
 int __sys_getsockname(int fd, struct sockaddr __user *usockaddr,
 		      int __user *usockaddr_len)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_GETSOCKNAME(&fd, &usockaddr, &usockaddr_len);
+
 	struct socket *sock;
 	struct sockaddr_storage address;
 	CLASS(fd, f)(fd);
