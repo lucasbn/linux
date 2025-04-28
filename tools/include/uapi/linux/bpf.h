@@ -1122,6 +1122,7 @@ enum bpf_attach_type {
 	BPF_TRACE_KPROBE_SESSION,
 	BPF_TRACE_UPROBE_SESSION,
 	BPF_CGROUP_SYSCALL_SOCKET,
+	BPF_CGROUP_SYSCALL_SOCKET_EXIT,
 	BPF_CGROUP_SYSCALL_SENDTO,
 	BPF_CGROUP_SYSCALL_RECVMSG,
 	BPF_CGROUP_SYSCALL_BIND,
@@ -6796,6 +6797,14 @@ struct bpf_cg_syscall_socket {
 	__u32 family;
 	__u32 type;
 	__u32 protocol;
+	__s32 ret;
+};
+
+struct bpf_cg_syscall_socket_exit {
+	__u32 family;
+	__u32 type;
+	__u32 protocol;
+	__u32 fd;
 	__s32 ret;
 };
 

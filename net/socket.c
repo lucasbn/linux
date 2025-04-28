@@ -1691,7 +1691,11 @@ int __sys_socket(int family, int type, int protocol)
 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
 
-	return sock_map_fd(sock, flags & (O_CLOEXEC | O_NONBLOCK));
+	int fd = sock_map_fd(sock, flags & (O_CLOEXEC | O_NONBLOCK));
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET_EXIT(&family, &type, &protocol, &fd);
+
+	return fd;
 }
 
 SYSCALL_DEFINE3(socket, int, family, int, type, int, protocol)

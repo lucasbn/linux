@@ -2066,6 +2066,26 @@ int __cgroup_bpf_run_filter_syscall_socket(int *family, int *type, int *protocol
 }
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_socket);
 
+int __cgroup_bpf_run_filter_syscall_socket_exit(int *family, int *type, int *protocol, int* fd, int *ret_val, u32 *flags) {
+	struct bpf_cg_syscall_socket_exit_kern ctx = {
+		.family = family,
+		.type = type,
+		.protocol = protocol,
+		.fd = fd,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_SOCKET_EXIT, &ctx, 
+		bpf_prog_run, 0, flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_socket_exit);
+
 int __cgroup_bpf_run_filter_syscall_sendto(int *fd, void **buff, size_t *len, 
 					unsigned int *flags, struct sockaddr **addr, 
 					int *addr_len, int *ret_val, u32 *ret_flags) {

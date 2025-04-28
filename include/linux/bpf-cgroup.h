@@ -68,6 +68,7 @@ to_cgroup_bpf_attach_type(enum bpf_attach_type attach_type)
 	CGROUP_ATYPE(CGROUP_UNIX_GETSOCKNAME);
 	CGROUP_ATYPE(CGROUP_INET_SOCK_RELEASE);
 	CGROUP_ATYPE(CGROUP_SYSCALL_SOCKET);
+	CGROUP_ATYPE(CGROUP_SYSCALL_SOCKET_EXIT);
 	CGROUP_ATYPE(CGROUP_SYSCALL_SENDTO);
 	CGROUP_ATYPE(CGROUP_SYSCALL_RECVMSG);
 	CGROUP_ATYPE(CGROUP_SYSCALL_BIND);
@@ -164,6 +165,9 @@ int __cgroup_bpf_run_filter_getsockopt_kern(struct sock *sk, int level,
 
 int __cgroup_bpf_run_filter_syscall_socket(int *family, int *type, 
 						int *protocol, int *ret_val, 
+						u32 *flags);
+int __cgroup_bpf_run_filter_syscall_socket_exit(int *family, int *type, 
+						int *protocol, int *fd, int *ret_val, 
 						u32 *flags);
 int __cgroup_bpf_run_filter_syscall_sendto(int *fd, void **buff, 
 						size_t *len, unsigned int *flags, 
@@ -462,6 +466,9 @@ static inline bool cgroup_bpf_sock_enabled(struct sock *sk,
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(family, type, protocol) \
 	__BPF_CGROUP_RUN_PROG_SYSCALL(SOCKET, socket, family, type, protocol)
 
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET_EXIT(family, type, protocol, fd) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(SOCKET_EXIT, socket_exit, family, type, protocol, fd)
+
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(fd, buff, len, flags, addr, addr_len) \
 	__BPF_CGROUP_RUN_PROG_SYSCALL(SENDTO, sendto, fd, buff, len, flags, addr, addr_len)
 
@@ -578,6 +585,7 @@ static inline int bpf_percpu_cgroup_storage_update(struct bpf_map *map,
 #define BPF_CGROUP_RUN_PROG_SETSOCKOPT(sock, level, optname, optval, optlen, \
 				       kernel_optval) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(family, type, protocol) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET_EXIT(family, type, protocol, fd) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(fd, buff, len, flags, addr, addr_len) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG(fd, msg, flags) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_BIND(fd, addr, addrlen) ({ 0; })

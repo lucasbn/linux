@@ -2642,6 +2642,7 @@ bpf_prog_load_check_attach(enum bpf_prog_type prog_type,
 	case BPF_PROG_TYPE_CGROUP_SYSCALL:
 		switch (expected_attach_type) {
 		case BPF_CGROUP_SYSCALL_SOCKET:
+		case BPF_CGROUP_SYSCALL_SOCKET_EXIT:
 		case BPF_CGROUP_SYSCALL_SENDTO:
 		case BPF_CGROUP_SYSCALL_RECVMSG:
 		case BPF_CGROUP_SYSCALL_BIND:
@@ -4086,6 +4087,7 @@ attach_type_to_prog_type(enum bpf_attach_type attach_type)
 	case BPF_CGROUP_DEVICE:
 		return BPF_PROG_TYPE_CGROUP_DEVICE;
 	case BPF_CGROUP_SYSCALL_SOCKET:
+	case BPF_CGROUP_SYSCALL_SOCKET_EXIT:
 	case BPF_CGROUP_SYSCALL_SENDTO:
 	case BPF_CGROUP_SYSCALL_RECVMSG:
 	case BPF_CGROUP_SYSCALL_BIND:
@@ -4400,6 +4402,7 @@ static int bpf_prog_query(const union bpf_attr *attr,
 	case BPF_CGROUP_GETSOCKOPT:
 	case BPF_CGROUP_SETSOCKOPT:
 	case BPF_CGROUP_SYSCALL_SOCKET:
+	case BPF_CGROUP_SYSCALL_SOCKET_EXIT:
 	case BPF_CGROUP_SYSCALL_SENDTO:
 	case BPF_CGROUP_SYSCALL_RECVMSG:
 	case BPF_CGROUP_SYSCALL_BIND:
