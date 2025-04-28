@@ -1546,7 +1546,7 @@ struct bpf_cg_syscall_sendto_kern {
 	void **buff;
 	size_t *len;
 	u32 *flags;
-	struct sockaddr **uaddr;
+	struct sockaddr_storage *addr;
 	u32 *addr_len;
 	s32 *ret;
 	/* Temporary "register" to make indirect stores to fields defined above.

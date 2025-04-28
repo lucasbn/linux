@@ -2155,12 +2155,28 @@ SYSCALL_DEFINE3(getpeername, int, fd, struct sockaddr __user *, usockaddr,
 int __sys_sendto(int fd, void __user *buff, size_t len, unsigned int flags,
 		 struct sockaddr __user *addr,  int addr_len)
 {
-	BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(&fd, &buff, &len, &flags, &addr, &addr_len);
-
 	struct socket *sock;
 	struct sockaddr_storage address;
 	int err;
 	struct msghdr msg;
+
+	msg.msg_name = NULL;
+	msg.msg_control = NULL;
+	msg.msg_controllen = 0;
+	msg.msg_namelen = 0;
+	msg.msg_ubuf = NULL;
+	if (addr) {
+		err = move_addr_to_kernel(addr, addr_len, &address);
+		if (err < 0)
+			return err;
+	}
+
+	// TODO: check if these lines can be outside of the if (addr) block... it
+	// might break things
+	msg.msg_name = (struct sockaddr *)&address;
+	msg.msg_namelen = addr_len;
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(&fd, &buff, &len, &flags, &address, &msg.msg_namelen);
 
 	err = import_ubuf(ITER_SOURCE, buff, len, &msg.msg_iter);
 	if (unlikely(err))
@@ -2173,18 +2189,6 @@ int __sys_sendto(int fd, void __user *buff, size_t len, unsigned int flags,
 	if (unlikely(!sock))
 		return -ENOTSOCK;
 
-	msg.msg_name = NULL;
-	msg.msg_control = NULL;
-	msg.msg_controllen = 0;
-	msg.msg_namelen = 0;
-	msg.msg_ubuf = NULL;
-	if (addr) {
-		err = move_addr_to_kernel(addr, addr_len, &address);
-		if (err < 0)
-			return err;
-		msg.msg_name = (struct sockaddr *)&address;
-		msg.msg_namelen = addr_len;
-	}
 	flags &= ~MSG_INTERNAL_SENDMSG_FLAGS;
 	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;

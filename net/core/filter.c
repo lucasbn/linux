@@ -10514,9 +10514,17 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 				CG_SYSCALL_FIELD_RO_ACCESS(sendto, buff, buff);
 				CG_SYSCALL_FIELD_RW_ACCESS(sendto, len, len);
 				CG_SYSCALL_FIELD_RW_ACCESS(sendto, flags, flags);
-				CG_SYSCALL_FIELD_RO_ACCESS(sendto, addr, uaddr);
 				CG_SYSCALL_FIELD_RW_ACCESS(sendto, addr_len, addr_len);
 				CG_SYSCALL_FIELD_RW_ACCESS(sendto, ret, ret);
+				case bpf_ctx_range_till(struct bpf_cg_syscall_sendto, ss_data[0],
+											ss_data[127]):
+					int off = si->off;
+					off -= offsetof(struct bpf_cg_syscall_sendto, ss_data[0]);
+
+					CG_SYSCALL_LOAD_OR_STORE(struct bpf_cg_syscall_sendto, 
+						ss_data[0], struct bpf_cg_syscall_sendto_kern, addr, off);
+
+					break;
 			}
 			break;
 		case BPF_CGROUP_SYSCALL_RECVMSG:

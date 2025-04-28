@@ -2087,14 +2087,14 @@ int __cgroup_bpf_run_filter_syscall_socket_exit(int *family, int *type, int *pro
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_socket_exit);
 
 int __cgroup_bpf_run_filter_syscall_sendto(int *fd, void **buff, size_t *len, 
-					unsigned int *flags, struct sockaddr **addr, 
+					unsigned int *flags, struct sockaddr_storage *addr, 
 					int *addr_len, int *ret_val, u32 *ret_flags) {
 	struct bpf_cg_syscall_sendto_kern ctx = {
 		.fd = fd,
 		.buff = buff,
 		.len = len,
 		.flags = flags,
-		.uaddr = addr,
+		.addr = addr,
 		.addr_len = addr_len,
 		.ret = ret_val,
 	};

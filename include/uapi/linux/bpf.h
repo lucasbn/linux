@@ -6813,7 +6813,7 @@ struct bpf_cg_syscall_sendto {
 	__bpf_md_ptr(void *, buff);
 	__u32 len;
 	__u32 flags;
-	__bpf_md_ptr(struct sockaddr *, addr);
+	char ss_data[128];
 	__u32 addr_len;
 	__s32 ret;
 };

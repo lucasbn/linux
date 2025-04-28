@@ -171,7 +171,7 @@ int __cgroup_bpf_run_filter_syscall_socket_exit(int *family, int *type,
 						u32 *flags);
 int __cgroup_bpf_run_filter_syscall_sendto(int *fd, void **buff, 
 						size_t *len, unsigned int *flags, 
-						struct sockaddr **addr, int *addr_len, 
+						struct sockaddr_storage *addr, int *addr_len, 
 						int *ret_val, u32 *ret_flags);
 int __cgroup_bpf_run_filter_syscall_recvmsg(int *fd, struct user_msghdr **msg, 
 						unsigned int *flags, int *ret_val, 
