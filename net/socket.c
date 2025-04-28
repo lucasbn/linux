@@ -2878,7 +2878,11 @@ long __sys_recvmsg(int fd, struct user_msghdr __user *msg, unsigned int flags,
 	if (unlikely(!sock))
 		return -ENOTSOCK;
 
-	return ___sys_recvmsg(sock, msg, &msg_sys, flags, 0);
+	int ret = ___sys_recvmsg(sock, msg, &msg_sys, flags, 0);
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG_EXIT(&fd, &msg, &flags, &ret);
+
+	return ret;
 }
 
 SYSCALL_DEFINE3(recvmsg, int, fd, struct user_msghdr __user *, msg,

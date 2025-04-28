@@ -2130,6 +2130,26 @@ int __cgroup_bpf_run_filter_syscall_recvmsg(int *fd, struct user_msghdr **msg,
 }
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_recvmsg);
 
+int __cgroup_bpf_run_filter_syscall_recvmsg_exit(int *fd, struct user_msghdr **msg,
+					unsigned int *flags, int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_recvmsg_exit_kern ctx = {
+		.fd = fd,
+		.msg = msg,
+		.flags = flags,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_RECVMSG_EXIT, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_recvmsg_exit);
+
 int __cgroup_bpf_run_filter_syscall_bind(int *fd, struct sockaddr_storage *addr,
 					int *addrlen, int *ret_val, u32 *ret_flags) {
 	struct bpf_cg_syscall_bind_kern ctx = {

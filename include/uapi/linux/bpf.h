@@ -1125,6 +1125,7 @@ enum bpf_attach_type {
 	BPF_CGROUP_SYSCALL_SOCKET_EXIT,
 	BPF_CGROUP_SYSCALL_SENDTO,
 	BPF_CGROUP_SYSCALL_RECVMSG,
+	BPF_CGROUP_SYSCALL_RECVMSG_EXIT,
 	BPF_CGROUP_SYSCALL_BIND,
 	BPF_CGROUP_SYSCALL_SETSOCKOPT,
 	BPF_CGROUP_SYSCALL_GETSOCKNAME,
@@ -6819,6 +6820,13 @@ struct bpf_cg_syscall_sendto {
 };
 
 struct bpf_cg_syscall_recvmsg {
+	__u32 fd;
+	__bpf_md_ptr(struct user_msghdr *, msg);
+	__u32 flags;
+	__s32 ret;
+};
+
+struct bpf_cg_syscall_recvmsg_exit {
 	__u32 fd;
 	__bpf_md_ptr(struct user_msghdr *, msg);
 	__u32 flags;

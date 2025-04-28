@@ -71,6 +71,7 @@ to_cgroup_bpf_attach_type(enum bpf_attach_type attach_type)
 	CGROUP_ATYPE(CGROUP_SYSCALL_SOCKET_EXIT);
 	CGROUP_ATYPE(CGROUP_SYSCALL_SENDTO);
 	CGROUP_ATYPE(CGROUP_SYSCALL_RECVMSG);
+	CGROUP_ATYPE(CGROUP_SYSCALL_RECVMSG_EXIT);
 	CGROUP_ATYPE(CGROUP_SYSCALL_BIND);
 	CGROUP_ATYPE(CGROUP_SYSCALL_SETSOCKOPT);
 	CGROUP_ATYPE(CGROUP_SYSCALL_GETSOCKNAME);
@@ -174,6 +175,9 @@ int __cgroup_bpf_run_filter_syscall_sendto(int *fd, void **buff,
 						struct sockaddr_storage *addr, int *addr_len, 
 						int *ret_val, u32 *ret_flags);
 int __cgroup_bpf_run_filter_syscall_recvmsg(int *fd, struct user_msghdr **msg, 
+						unsigned int *flags, int *ret_val, 
+						u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_recvmsg_exit(int *fd, struct user_msghdr **msg, 
 						unsigned int *flags, int *ret_val, 
 						u32 *ret_flags);
 int __cgroup_bpf_run_filter_syscall_bind(int *fd, struct sockaddr_storage *addr, 
@@ -463,6 +467,16 @@ static inline bool cgroup_bpf_sock_enabled(struct sock *sk,
 	__ret;								\
 })
 
+#define __BPF_CGROUP_RUN_PROG_SYSCALL_EXIT(type_macro, fn_suffix, ...)	\
+({									\
+	u32 __flags = 0; 						\
+	int __ret = 0;							\
+	if (cgroup_bpf_enabled(CGROUP_SYSCALL_##type_macro)) {	\
+		__ret = __cgroup_bpf_run_filter_syscall_##fn_suffix(__VA_ARGS__, &__flags); \
+	}								\
+	__ret;								\
+})
+
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(family, type, protocol) \
 	__BPF_CGROUP_RUN_PROG_SYSCALL(SOCKET, socket, family, type, protocol)
 
@@ -474,6 +488,9 @@ static inline bool cgroup_bpf_sock_enabled(struct sock *sk,
 
 #define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG(fd, msg, flags) \
 	__BPF_CGROUP_RUN_PROG_SYSCALL(RECVMSG, recvmsg, fd, msg, flags)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG_EXIT(fd, msg, flags, ret) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL_EXIT(RECVMSG_EXIT, recvmsg_exit, fd, msg, flags, ret)
 
 #define BPF_CGROUP_RUN_PROG_SYSCALL_BIND(fd, addr, addrlen) \
 	__BPF_CGROUP_RUN_PROG_SYSCALL(BIND, bind, fd, addr, addrlen)
@@ -588,6 +605,7 @@ static inline int bpf_percpu_cgroup_storage_update(struct bpf_map *map,
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET_EXIT(family, type, protocol, fd) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(fd, buff, len, flags, addr, addr_len) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG(fd, msg, flags) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG_EXIT(fd, msg, flags, ret) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_BIND(fd, addr, addrlen) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SETSOCKOPT(fd, level, optname, user_optval, optlen) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_GETSOCKNAME(fd, usockaddr, usockaddr_len) ({ 0; })
