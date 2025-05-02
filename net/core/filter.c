@@ -10577,6 +10577,22 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 				CG_SYSCALL_FIELD_RW_ACCESS(getsockname, ret, ret);
 			}
 			break;
+		case BPF_CGROUP_SYSCALL_CONNECT:
+			switch (si->off) {
+				CG_SYSCALL_FIELD_RW_ACCESS(connect, fd, fd);
+				CG_SYSCALL_FIELD_RW_ACCESS(connect, addrlen, addrlen);
+				CG_SYSCALL_FIELD_RW_ACCESS(connect, ret, ret);
+				case bpf_ctx_range_till(struct bpf_cg_syscall_connect, ss_data[0],
+											ss_data[127]):
+					int off = si->off;
+					off -= offsetof(struct bpf_cg_syscall_connect, ss_data[0]);
+
+					CG_SYSCALL_LOAD_OR_STORE(struct bpf_cg_syscall_connect, 
+						ss_data[0], struct bpf_cg_syscall_connect_kern, addr, off);
+
+					break;
+			}
+			break;
 		default:
 			break;
 	}

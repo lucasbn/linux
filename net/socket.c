@@ -2052,15 +2052,17 @@ out:
 int __sys_connect(int fd, struct sockaddr __user *uservaddr, int addrlen)
 {
 	struct sockaddr_storage address;
-	CLASS(fd, f)(fd);
 	int ret;
-
-	if (fd_empty(f))
-		return -EBADF;
 
 	ret = move_addr_to_kernel(uservaddr, addrlen, &address);
 	if (ret)
 		return ret;
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_CONNECT(&fd, &address, &addrlen);
+
+	CLASS(fd, f)(fd);
+	if (fd_empty(f))
+		return -EBADF;
 
 	return __sys_connect_file(fd_file(f), &address, addrlen, 0);
 }
