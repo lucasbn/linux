@@ -10593,6 +10593,23 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 					break;
 			}
 			break;
+		case BPF_CGROUP_SYSCALL_ACCEPT_EXIT:
+			switch (si->off) {
+				CG_SYSCALL_FIELD_RW_ACCESS(accept_exit, fd, fd);
+				CG_SYSCALL_FIELD_RW_ACCESS(accept_exit, addrlen, addrlen);
+				// We don't support reading/writing to return here just yet
+				// CG_SYSCALL_FIELD_RW_ACCESS(connect, ret, ret);
+				case bpf_ctx_range_till(struct bpf_cg_syscall_accept_exit, ss_data[0],
+											ss_data[127]):
+					int off = si->off;
+					off -= offsetof(struct bpf_cg_syscall_accept_exit, ss_data[0]);
+
+					CG_SYSCALL_LOAD_OR_STORE(struct bpf_cg_syscall_accept_exit, 
+						ss_data[0], struct bpf_cg_syscall_accept_exit_kern, addr, off);
+
+					break;
+			}
+			break;
 		default:
 			break;
 	}

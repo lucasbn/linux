@@ -1939,6 +1939,10 @@ struct file *do_accept(struct file *file, struct proto_accept_arg *arg,
 			err = -ECONNABORTED;
 			goto out_fd;
 		}
+
+		int fd = 0;
+		BPF_CGROUP_RUN_PROG_SYSCALL_ACCEPT_EXIT(&fd, &address, &len);
+
 		err = move_addr_to_user(&address,
 					len, upeer_sockaddr, upeer_addrlen);
 		if (err < 0)

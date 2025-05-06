@@ -1130,6 +1130,7 @@ enum bpf_attach_type {
 	BPF_CGROUP_SYSCALL_SETSOCKOPT,
 	BPF_CGROUP_SYSCALL_GETSOCKNAME,
 	BPF_CGROUP_SYSCALL_CONNECT,
+	BPF_CGROUP_SYSCALL_ACCEPT_EXIT,
 	__MAX_BPF_ATTACH_TYPE
 };
 
@@ -6858,6 +6859,13 @@ struct bpf_cg_syscall_getsockname {
 };
 
 struct bpf_cg_syscall_connect {
+	__u32 fd;
+	char ss_data[128];
+	__u32 addrlen;
+	__s32 ret;
+};
+
+struct bpf_cg_syscall_accept_exit {
 	__u32 fd;
 	char ss_data[128];
 	__u32 addrlen;

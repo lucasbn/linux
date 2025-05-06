@@ -1630,6 +1630,18 @@ struct bpf_cg_syscall_connect_kern {
 	 u64 tmp_reg;
 };
 
+struct bpf_cg_syscall_accept_exit_kern {
+	u32 *fd;
+	struct sockaddr_storage *addr;
+	u32 *addrlen;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
 struct bpf_sock_ops_kern {
 	struct	sock *sk;
 	union {
