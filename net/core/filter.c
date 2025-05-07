@@ -10508,6 +10508,14 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 				CG_SYSCALL_FIELD_RW_ACCESS(socket_exit, ret, ret);
 			}
 			break;
+		case BPF_CGROUP_SYSCALL_SENDMSG:
+			switch (si->off) {
+				CG_SYSCALL_FIELD_RW_ACCESS(sendmsg, fd, fd);
+				CG_SYSCALL_FIELD_RO_ACCESS(sendmsg, msg, msg);
+				CG_SYSCALL_FIELD_RW_ACCESS(sendmsg, flags, flags);
+				CG_SYSCALL_FIELD_RW_ACCESS(sendmsg, ret, ret);
+			}
+			break;
 		case BPF_CGROUP_SYSCALL_SENDTO:
 			switch (si->off) {
 				CG_SYSCALL_FIELD_RW_ACCESS(sendto, fd, fd);

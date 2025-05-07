@@ -1123,6 +1123,7 @@ enum bpf_attach_type {
 	BPF_TRACE_UPROBE_SESSION,
 	BPF_CGROUP_SYSCALL_SOCKET,
 	BPF_CGROUP_SYSCALL_SOCKET_EXIT,
+	BPF_CGROUP_SYSCALL_SENDMSG,
 	BPF_CGROUP_SYSCALL_SENDTO,
 	BPF_CGROUP_SYSCALL_RECVMSG,
 	BPF_CGROUP_SYSCALL_RECVMSG_EXIT,
@@ -6808,6 +6809,13 @@ struct bpf_cg_syscall_socket_exit {
 	__u32 type;
 	__u32 protocol;
 	__u32 fd;
+	__s32 ret;
+};
+
+struct bpf_cg_syscall_sendmsg {
+	__u32 fd;
+	__bpf_md_ptr(struct user_msghdr *, msg);
+	__u32 flags;
 	__s32 ret;
 };
 

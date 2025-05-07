@@ -2659,6 +2659,8 @@ long __sys_sendmsg_sock(struct socket *sock, struct msghdr *msg,
 long __sys_sendmsg(int fd, struct user_msghdr __user *msg, unsigned int flags,
 		   bool forbid_cmsg_compat)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_SENDMSG(&fd, &msg, &flags);
+
 	struct msghdr msg_sys;
 	struct socket *sock;
 
