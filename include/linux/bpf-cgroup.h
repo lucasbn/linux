@@ -78,6 +78,7 @@ to_cgroup_bpf_attach_type(enum bpf_attach_type attach_type)
 	CGROUP_ATYPE(CGROUP_SYSCALL_GETSOCKNAME);
 	CGROUP_ATYPE(CGROUP_SYSCALL_CONNECT);
 	CGROUP_ATYPE(CGROUP_SYSCALL_ACCEPT_EXIT);
+	CGROUP_ATYPE(CGROUP_SYSCALL_UNAME);
 	default:
 		return CGROUP_BPF_ATTACH_TYPE_INVALID;
 	}
@@ -200,6 +201,7 @@ int __cgroup_bpf_run_filter_syscall_connect(int *fd,
 int __cgroup_bpf_run_filter_syscall_accept_exit(int *fd, 
 						struct sockaddr_storage *addr, int *addr_len,
 						u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_uname(struct new_utsname **name, int *ret_val, u32 *ret_flags);
 
 static inline enum bpf_cgroup_storage_type cgroup_storage_type(
 	struct bpf_map *map)
@@ -521,6 +523,9 @@ static inline bool cgroup_bpf_sock_enabled(struct sock *sk,
 #define BPF_CGROUP_RUN_PROG_SYSCALL_ACCEPT_EXIT(fd, addr, addrlen) \
 	__BPF_CGROUP_RUN_PROG_SYSCALL_EXIT(ACCEPT_EXIT, accept_exit, fd, addr, addrlen)
 
+#define BPF_CGROUP_RUN_PROG_SYSCALL_UNAME(name) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(UNAME, uname, name)
+
 int cgroup_bpf_prog_attach(const union bpf_attr *attr,
 			   enum bpf_prog_type ptype, struct bpf_prog *prog);
 int cgroup_bpf_prog_detach(const union bpf_attr *attr,
@@ -631,6 +636,7 @@ static inline int bpf_percpu_cgroup_storage_update(struct bpf_map *map,
 #define BPF_CGROUP_RUN_PROG_SYSCALL_SETSOCKOPT(fd, level, optname, user_optval, optlen) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_GETSOCKNAME(fd, usockaddr, usockaddr_len) ({ 0; })
 #define BPF_CGROUP_RUN_PROG_SYSCALL_CONNECT(fd, addr, addrlen) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_UNAME(name) ({ 0; })
 #define for_each_cgroup_storage_type(stype) for (; false; )
 
 #endif /* CONFIG_CGROUP_BPF */

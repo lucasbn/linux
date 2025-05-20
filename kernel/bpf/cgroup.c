@@ -2276,6 +2276,23 @@ int __cgroup_bpf_run_filter_syscall_accept_exit(int *fd,
 }
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_accept_exit);
 
+int __cgroup_bpf_run_filter_syscall_uname(struct new_utsname **name, int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_uname_kern ctx = {
+		.name = name,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_UNAME, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_uname);
+
 static ssize_t sysctl_cpy_dir(const struct ctl_dir *dir, char **bufp,
 			      size_t *lenp)
 {

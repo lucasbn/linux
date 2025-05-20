@@ -10618,6 +10618,12 @@ static u32 cg_syscall_convert_ctx_access(enum bpf_access_type access_type,
 					break;
 			}
 			break;
+		case BPF_CGROUP_SYSCALL_UNAME:
+			switch (si->off) {
+				CG_SYSCALL_FIELD_RO_ACCESS(uname, name, name);
+				CG_SYSCALL_FIELD_RW_ACCESS(uname, ret, ret);
+			}
+			break;
 		default:
 			break;
 	}
