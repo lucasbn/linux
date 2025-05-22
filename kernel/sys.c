@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/bpf-cgroup.h>
 #include <linux/export.h>
 #include <linux/mm.h>
 #include <linux/mm_inline.h>
@@ -1321,6 +1322,8 @@ static int override_release(char __user *release, size_t len)
 SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 {
 	struct new_utsname tmp;
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_UNAME(&name);
 
 	down_read(&uts_sem);
 	memcpy(&tmp, utsname(), sizeof(tmp));

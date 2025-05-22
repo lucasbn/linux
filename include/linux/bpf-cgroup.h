@@ -67,6 +67,18 @@ to_cgroup_bpf_attach_type(enum bpf_attach_type attach_type)
 	CGROUP_ATYPE(CGROUP_INET6_GETSOCKNAME);
 	CGROUP_ATYPE(CGROUP_UNIX_GETSOCKNAME);
 	CGROUP_ATYPE(CGROUP_INET_SOCK_RELEASE);
+	CGROUP_ATYPE(CGROUP_SYSCALL_SOCKET);
+	CGROUP_ATYPE(CGROUP_SYSCALL_SOCKET_EXIT);
+	CGROUP_ATYPE(CGROUP_SYSCALL_SENDMSG);
+	CGROUP_ATYPE(CGROUP_SYSCALL_SENDTO);
+	CGROUP_ATYPE(CGROUP_SYSCALL_RECVMSG);
+	CGROUP_ATYPE(CGROUP_SYSCALL_RECVMSG_EXIT);
+	CGROUP_ATYPE(CGROUP_SYSCALL_BIND);
+	CGROUP_ATYPE(CGROUP_SYSCALL_SETSOCKOPT);
+	CGROUP_ATYPE(CGROUP_SYSCALL_GETSOCKNAME);
+	CGROUP_ATYPE(CGROUP_SYSCALL_CONNECT);
+	CGROUP_ATYPE(CGROUP_SYSCALL_ACCEPT_EXIT);
+	CGROUP_ATYPE(CGROUP_SYSCALL_UNAME);
 	default:
 		return CGROUP_BPF_ATTACH_TYPE_INVALID;
 	}
@@ -155,6 +167,41 @@ int __cgroup_bpf_run_filter_getsockopt(struct sock *sk, int level,
 int __cgroup_bpf_run_filter_getsockopt_kern(struct sock *sk, int level,
 					    int optname, void *optval,
 					    int *optlen, int retval);
+
+int __cgroup_bpf_run_filter_syscall_socket(int *family, int *type, 
+						int *protocol, int *ret_val, 
+						u32 *flags);
+int __cgroup_bpf_run_filter_syscall_socket_exit(int *family, int *type, 
+						int *protocol, int *fd, int *ret_val, 
+						u32 *flags);
+int __cgroup_bpf_run_filter_syscall_sendmsg(int *fd, struct user_msghdr **buff, 
+						unsigned int *flags, int *ret_val, u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_sendto(int *fd, void **buff, 
+						size_t *len, unsigned int *flags, 
+						struct sockaddr_storage *addr, int *addr_len, 
+						int *ret_val, u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_recvmsg(int *fd, struct user_msghdr **msg, 
+						unsigned int *flags, int *ret_val, 
+						u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_recvmsg_exit(int *fd, struct user_msghdr **msg, 
+						unsigned int *flags, int *ret_val, 
+						u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_bind(int *fd, struct sockaddr_storage *addr, 
+						int *addrlen, int *ret_val, 
+						u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_setsockopt(int *fd, int *level, int *optname,
+						char **user_optval, int *optlen, 
+						int *ret_val, u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_getsockname(int *fd, 
+						struct sockaddr **usockaddr, int **usockaddr_len,
+						int *ret_val, u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_connect(int *fd, 
+						struct sockaddr_storage *addr, int *addr_len,
+						int *ret_val, u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_accept_exit(int *fd, 
+						struct sockaddr_storage *addr, int *addr_len,
+						u32 *ret_flags);
+int __cgroup_bpf_run_filter_syscall_uname(struct new_utsname **name, int *ret_val, u32 *ret_flags);
 
 static inline enum bpf_cgroup_storage_type cgroup_storage_type(
 	struct bpf_map *map)
@@ -417,6 +464,68 @@ static inline bool cgroup_bpf_sock_enabled(struct sock *sk,
 	__ret;								       \
 })
 
+
+
+#define __BPF_CGROUP_RUN_PROG_SYSCALL(type_macro, fn_suffix, ...)	\
+({									\
+	u32 __flags = 0; 						\
+	int __ret = 0;							\
+	int ret_val = 0;						\
+	if (cgroup_bpf_enabled(CGROUP_SYSCALL_##type_macro)) {	\
+		__ret = __cgroup_bpf_run_filter_syscall_##fn_suffix(__VA_ARGS__, &ret_val, &__flags); \
+		if (__flags & BPF_RET_OVERRIDE_SYSCALL) {		\
+			return ret_val;				\
+		}							\
+	}								\
+	__ret;								\
+})
+
+#define __BPF_CGROUP_RUN_PROG_SYSCALL_EXIT(type_macro, fn_suffix, ...)	\
+({									\
+	u32 __flags = 0; 						\
+	int __ret = 0;							\
+	if (cgroup_bpf_enabled(CGROUP_SYSCALL_##type_macro)) {	\
+		__ret = __cgroup_bpf_run_filter_syscall_##fn_suffix(__VA_ARGS__, &__flags); \
+	}								\
+	__ret;								\
+})
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(family, type, protocol) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(SOCKET, socket, family, type, protocol)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET_EXIT(family, type, protocol, fd) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(SOCKET_EXIT, socket_exit, family, type, protocol, fd)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SENDMSG(fd, msghdr, flags) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(SENDMSG, sendmsg, fd, msghdr, flags)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(fd, buff, len, flags, addr, addr_len) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(SENDTO, sendto, fd, buff, len, flags, addr, addr_len)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG(fd, msg, flags) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(RECVMSG, recvmsg, fd, msg, flags)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG_EXIT(fd, msg, flags, ret) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL_EXIT(RECVMSG_EXIT, recvmsg_exit, fd, msg, flags, ret)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_BIND(fd, addr, addrlen) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(BIND, bind, fd, addr, addrlen)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SETSOCKOPT(fd, level, optname, user_optval, optlen) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(SETSOCKOPT, setsockopt, fd, level, optname, user_optval, optlen)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_GETSOCKNAME(fd, usockaddr, usockaddr_len) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(GETSOCKNAME, getsockname, fd, usockaddr, usockaddr_len)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_CONNECT(fd, addr, addrlen) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(CONNECT, connect, fd, addr, addrlen)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_ACCEPT_EXIT(fd, addr, addrlen) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL_EXIT(ACCEPT_EXIT, accept_exit, fd, addr, addrlen)
+
+#define BPF_CGROUP_RUN_PROG_SYSCALL_UNAME(name) \
+	__BPF_CGROUP_RUN_PROG_SYSCALL(UNAME, uname, name)
+
 int cgroup_bpf_prog_attach(const union bpf_attr *attr,
 			   enum bpf_prog_type ptype, struct bpf_prog *prog);
 int cgroup_bpf_prog_detach(const union bpf_attr *attr,
@@ -517,7 +626,17 @@ static inline int bpf_percpu_cgroup_storage_update(struct bpf_map *map,
 					    optlen, retval) ({ retval; })
 #define BPF_CGROUP_RUN_PROG_SETSOCKOPT(sock, level, optname, optval, optlen, \
 				       kernel_optval) ({ 0; })
-
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(family, type, protocol) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET_EXIT(family, type, protocol, fd) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SENDMSG(fd, msghdr, flags) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(fd, buff, len, flags, addr, addr_len) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG(fd, msg, flags) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG_EXIT(fd, msg, flags, ret) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_BIND(fd, addr, addrlen) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_SETSOCKOPT(fd, level, optname, user_optval, optlen) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_GETSOCKNAME(fd, usockaddr, usockaddr_len) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_CONNECT(fd, addr, addrlen) ({ 0; })
+#define BPF_CGROUP_RUN_PROG_SYSCALL_UNAME(name) ({ 0; })
 #define for_each_cgroup_storage_type(stype) for (; false; )
 
 #endif /* CONFIG_CGROUP_BPF */

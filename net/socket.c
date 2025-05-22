@@ -1677,6 +1677,8 @@ __bpf_hook_end();
 
 int __sys_socket(int family, int type, int protocol)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET(&family, &type, &protocol);
+
 	struct socket *sock;
 	int flags;
 
@@ -1689,7 +1691,11 @@ int __sys_socket(int family, int type, int protocol)
 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
 
-	return sock_map_fd(sock, flags & (O_CLOEXEC | O_NONBLOCK));
+	int fd = sock_map_fd(sock, flags & (O_CLOEXEC | O_NONBLOCK));
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_SOCKET_EXIT(&family, &type, &protocol, &fd);
+
+	return fd;
 }
 
 SYSCALL_DEFINE3(socket, int, family, int, type, int, protocol)
@@ -1827,16 +1833,18 @@ int __sys_bind(int fd, struct sockaddr __user *umyaddr, int addrlen)
 	struct sockaddr_storage address;
 	CLASS(fd, f)(fd);
 	int err;
+	
+	err = move_addr_to_kernel(umyaddr, addrlen, &address);
+	if (unlikely(err))
+		return err;
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_BIND(&fd, &address, &addrlen);
 
 	if (fd_empty(f))
 		return -EBADF;
 	sock = sock_from_file(fd_file(f));
 	if (unlikely(!sock))
 		return -ENOTSOCK;
-
-	err = move_addr_to_kernel(umyaddr, addrlen, &address);
-	if (unlikely(err))
-		return err;
 
 	return __sys_bind_socket(sock, &address, addrlen);
 }
@@ -1931,6 +1939,10 @@ struct file *do_accept(struct file *file, struct proto_accept_arg *arg,
 			err = -ECONNABORTED;
 			goto out_fd;
 		}
+
+		int fd = 0;
+		BPF_CGROUP_RUN_PROG_SYSCALL_ACCEPT_EXIT(&fd, &address, &len);
+
 		err = move_addr_to_user(&address,
 					len, upeer_sockaddr, upeer_addrlen);
 		if (err < 0)
@@ -2044,15 +2056,17 @@ out:
 int __sys_connect(int fd, struct sockaddr __user *uservaddr, int addrlen)
 {
 	struct sockaddr_storage address;
-	CLASS(fd, f)(fd);
 	int ret;
-
-	if (fd_empty(f))
-		return -EBADF;
 
 	ret = move_addr_to_kernel(uservaddr, addrlen, &address);
 	if (ret)
 		return ret;
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_CONNECT(&fd, &address, &addrlen);
+
+	CLASS(fd, f)(fd);
+	if (fd_empty(f))
+		return -EBADF;
 
 	return __sys_connect_file(fd_file(f), &address, addrlen, 0);
 }
@@ -2071,6 +2085,8 @@ SYSCALL_DEFINE3(connect, int, fd, struct sockaddr __user *, uservaddr,
 int __sys_getsockname(int fd, struct sockaddr __user *usockaddr,
 		      int __user *usockaddr_len)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_GETSOCKNAME(&fd, &usockaddr, &usockaddr_len);
+
 	struct socket *sock;
 	struct sockaddr_storage address;
 	CLASS(fd, f)(fd);
@@ -2150,6 +2166,24 @@ int __sys_sendto(int fd, void __user *buff, size_t len, unsigned int flags,
 	int err;
 	struct msghdr msg;
 
+	msg.msg_name = NULL;
+	msg.msg_control = NULL;
+	msg.msg_controllen = 0;
+	msg.msg_namelen = 0;
+	msg.msg_ubuf = NULL;
+	if (addr) {
+		err = move_addr_to_kernel(addr, addr_len, &address);
+		if (err < 0)
+			return err;
+	}
+
+	// TODO: check if these lines can be outside of the if (addr) block... it
+	// might break things
+	msg.msg_name = (struct sockaddr *)&address;
+	msg.msg_namelen = addr_len;
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_SENDTO(&fd, &buff, &len, &flags, &address, &msg.msg_namelen);
+
 	err = import_ubuf(ITER_SOURCE, buff, len, &msg.msg_iter);
 	if (unlikely(err))
 		return err;
@@ -2161,18 +2195,6 @@ int __sys_sendto(int fd, void __user *buff, size_t len, unsigned int flags,
 	if (unlikely(!sock))
 		return -ENOTSOCK;
 
-	msg.msg_name = NULL;
-	msg.msg_control = NULL;
-	msg.msg_controllen = 0;
-	msg.msg_namelen = 0;
-	msg.msg_ubuf = NULL;
-	if (addr) {
-		err = move_addr_to_kernel(addr, addr_len, &address);
-		if (err < 0)
-			return err;
-		msg.msg_name = (struct sockaddr *)&address;
-		msg.msg_namelen = addr_len;
-	}
 	flags &= ~MSG_INTERNAL_SENDMSG_FLAGS;
 	if (sock->file->f_flags & O_NONBLOCK)
 		flags |= MSG_DONTWAIT;
@@ -2307,6 +2329,8 @@ EXPORT_SYMBOL(do_sock_setsockopt);
 int __sys_setsockopt(int fd, int level, int optname, char __user *user_optval,
 		     int optlen)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_SETSOCKOPT(&fd, &level, &optname, &user_optval, &optlen);
+
 	sockptr_t optval = USER_SOCKPTR(user_optval);
 	bool compat = in_compat_syscall();
 	struct socket *sock;
@@ -2635,6 +2659,8 @@ long __sys_sendmsg_sock(struct socket *sock, struct msghdr *msg,
 long __sys_sendmsg(int fd, struct user_msghdr __user *msg, unsigned int flags,
 		   bool forbid_cmsg_compat)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_SENDMSG(&fd, &msg, &flags);
+
 	struct msghdr msg_sys;
 	struct socket *sock;
 
@@ -2844,6 +2870,8 @@ long __sys_recvmsg_sock(struct socket *sock, struct msghdr *msg,
 long __sys_recvmsg(int fd, struct user_msghdr __user *msg, unsigned int flags,
 		   bool forbid_cmsg_compat)
 {
+	BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG(&fd, &msg, &flags);
+
 	struct msghdr msg_sys;
 	struct socket *sock;
 
@@ -2858,7 +2886,11 @@ long __sys_recvmsg(int fd, struct user_msghdr __user *msg, unsigned int flags,
 	if (unlikely(!sock))
 		return -ENOTSOCK;
 
-	return ___sys_recvmsg(sock, msg, &msg_sys, flags, 0);
+	int ret = ___sys_recvmsg(sock, msg, &msg_sys, flags, 0);
+
+	BPF_CGROUP_RUN_PROG_SYSCALL_RECVMSG_EXIT(&fd, &msg, &flags, &ret);
+
+	return ret;
 }
 
 SYSCALL_DEFINE3(recvmsg, int, fd, struct user_msghdr __user *, msg,

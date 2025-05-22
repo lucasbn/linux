@@ -56,6 +56,12 @@ Module.symvers
 dtbs-list
 modules.order
 
+image/
+build.sh
+run.sh
+vm.log
+vm.pid
+
 #
 # Top-level generic files
 #

@@ -1516,6 +1516,154 @@ struct bpf_sock_addr_kern {
 	u32 uaddrlen;
 };
 
+struct bpf_cg_syscall_socket_kern {
+	u32 *family;
+	u32 *type;
+	u32 *protocol;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_socket_exit_kern {
+	u32 *family;
+	u32 *type;
+	u32 *protocol;
+	u32 *fd;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_sendmsg_kern {
+	u32 *fd;
+	struct user_msghdr **msg;
+	u32 *flags;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_sendto_kern {
+	u32 *fd;
+	void **buff;
+	size_t *len;
+	u32 *flags;
+	struct sockaddr_storage *addr;
+	u32 *addr_len;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_recvmsg_kern {
+	u32 *fd;
+	struct user_msghdr **msg;
+	u32 *flags;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_recvmsg_exit_kern {
+	u32 *fd;
+	struct user_msghdr **msg;
+	u32 *flags;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_bind_kern {
+	u32 *fd;
+	struct sockaddr_storage *addr;
+	u32 *addrlen;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_setsockopt_kern {
+	u32 *fd;
+	u32 *level;
+	u32 *optname;
+	char **user_optval;
+	u32 *optlen;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_getsockname_kern {
+	u32 *fd;
+	struct sockaddr **usockaddr;
+	s32 **usockaddr_len;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_connect_kern {
+	u32 *fd;
+	struct sockaddr_storage *addr;
+	u32 *addrlen;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_accept_exit_kern {
+	u32 *fd;
+	struct sockaddr_storage *addr;
+	u32 *addrlen;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
+struct bpf_cg_syscall_uname_kern {
+	struct new_utsname **name;
+	s32 *ret;
+	/* Temporary "register" to make indirect stores to fields defined above.
+	 * We need three registers to make such a store, but only two (src and dst) 
+	 * are available at convert_ctx_access time
+	 */
+	 u64 tmp_reg;
+};
+
 struct bpf_sock_ops_kern {
 	struct	sock *sk;
 	union {

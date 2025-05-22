@@ -2047,6 +2047,252 @@ int __cgroup_bpf_run_filter_getsockopt_kern(struct sock *sk, int level,
 }
 #endif
 
+int __cgroup_bpf_run_filter_syscall_socket(int *family, int *type, int *protocol, int *ret_val, u32 *flags) {
+	struct bpf_cg_syscall_socket_kern ctx = {
+		.family = family,
+		.type = type,
+		.protocol = protocol,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_SOCKET, &ctx, 
+		bpf_prog_run, 0, flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_socket);
+
+int __cgroup_bpf_run_filter_syscall_socket_exit(int *family, int *type, int *protocol, int* fd, int *ret_val, u32 *flags) {
+	struct bpf_cg_syscall_socket_exit_kern ctx = {
+		.family = family,
+		.type = type,
+		.protocol = protocol,
+		.fd = fd,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_SOCKET_EXIT, &ctx, 
+		bpf_prog_run, 0, flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_socket_exit);
+
+int __cgroup_bpf_run_filter_syscall_sendmsg(int *fd, struct user_msghdr **msg,
+					unsigned int *flags, int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_sendmsg_kern ctx = {
+		.fd = fd,
+		.msg = msg,
+		.flags = flags,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_SENDMSG, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_sendmsg);
+
+
+int __cgroup_bpf_run_filter_syscall_sendto(int *fd, void **buff, size_t *len, 
+					unsigned int *flags, struct sockaddr_storage *addr, 
+					int *addr_len, int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_sendto_kern ctx = {
+		.fd = fd,
+		.buff = buff,
+		.len = len,
+		.flags = flags,
+		.addr = addr,
+		.addr_len = addr_len,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_SENDTO, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_sendto);
+
+int __cgroup_bpf_run_filter_syscall_recvmsg(int *fd, struct user_msghdr **msg,
+					unsigned int *flags, int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_recvmsg_kern ctx = {
+		.fd = fd,
+		.msg = msg,
+		.flags = flags,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_RECVMSG, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_recvmsg);
+
+int __cgroup_bpf_run_filter_syscall_recvmsg_exit(int *fd, struct user_msghdr **msg,
+					unsigned int *flags, int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_recvmsg_exit_kern ctx = {
+		.fd = fd,
+		.msg = msg,
+		.flags = flags,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_RECVMSG_EXIT, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_recvmsg_exit);
+
+int __cgroup_bpf_run_filter_syscall_bind(int *fd, struct sockaddr_storage *addr,
+					int *addrlen, int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_bind_kern ctx = {
+		.fd = fd,
+		.addr = addr,
+		.addrlen = addrlen,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_BIND, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_bind);
+
+int __cgroup_bpf_run_filter_syscall_setsockopt(int *fd, int *level, int *optname,
+					char **user_optval, int *optlen, 
+					int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_setsockopt_kern ctx = {
+		.fd = fd,
+		.level = level,
+		.optname = optname,
+		.user_optval = user_optval,
+		.optlen = optlen,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_SETSOCKOPT, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_setsockopt);
+
+int __cgroup_bpf_run_filter_syscall_getsockname(int *fd, 
+					struct sockaddr **usockaddr, int **usockaddr_len,
+					int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_getsockname_kern ctx = {
+		.fd = fd,
+		.usockaddr = usockaddr,
+		.usockaddr_len = usockaddr_len,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_GETSOCKNAME, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_getsockname);
+
+int __cgroup_bpf_run_filter_syscall_connect(int *fd, 
+					struct sockaddr_storage *addr, int *addrlen,
+					int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_connect_kern ctx = {
+		.fd = fd,
+		.addr = addr,
+		.addrlen = addrlen,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_CONNECT, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_connect);
+
+int __cgroup_bpf_run_filter_syscall_accept_exit(int *fd, 
+					struct sockaddr_storage *addr, int *addrlen,
+					u32 *ret_flags) {
+	struct bpf_cg_syscall_accept_exit_kern ctx = {
+		.fd = fd,
+		.addr = addr,
+		.addrlen = addrlen,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_ACCEPT_EXIT, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_accept_exit);
+
+int __cgroup_bpf_run_filter_syscall_uname(struct new_utsname **name, int *ret_val, u32 *ret_flags) {
+	struct bpf_cg_syscall_uname_kern ctx = {
+		.name = name,
+		.ret = ret_val,
+	};
+	int ret;
+
+	rcu_read_lock();
+	struct cgroup *cgrp = task_dfl_cgroup(current);
+	ret = bpf_prog_run_array_cg(&cgrp->bpf, CGROUP_SYSCALL_UNAME, &ctx, 
+		bpf_prog_run, 0, ret_flags);
+	rcu_read_unlock();
+
+	return ret;
+}
+EXPORT_SYMBOL(__cgroup_bpf_run_filter_syscall_uname);
+
 static ssize_t sysctl_cpy_dir(const struct ctl_dir *dir, char **bufp,
 			      size_t *lenp)
 {
